@@ -1,0 +1,19 @@
+:root{color-scheme:light;--bg:#f4f6f9;--card:#fff;--panel:#eff3f8;--text:#202d3b;--muted:#697889;--border:#dce3ec;--accent:#1769c2;--green:#168558}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+main{max-width:720px;margin:20px auto;padding:0 12px 24px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;gap:12px;box-shadow:0 3px 16px #1b33450b}
+.top,.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.muted{color:var(--muted);font-size:12px}.heading{font-size:22px;font-weight:800}
+.track{height:6px;border-radius:99px;background:var(--panel);overflow:hidden}.track>div{height:100%;width:0;background:var(--green);transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.stat{background:var(--panel);border-radius:10px;text-align:center;padding:9px 3px}.stat strong{font-size:23px;display:block;font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:var(--muted)}
+.reader{background:var(--panel);border-radius:12px;padding:14px 10px;text-align:center;display:grid;gap:9px;min-height:140px;align-content:center}.sentence{font-size:clamp(17px,4vw,22px);font-weight:750;line-height:1.5;min-height:42px;overflow-wrap:anywhere}.clockline{height:4px;background:var(--border);border-radius:8px;overflow:hidden}.clockline>div{height:100%;width:0;background:var(--green)}.status{color:var(--muted);font-size:12px;min-height:20px;line-height:1.5}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.tile{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 3px;min-height:68px;line-height:1.3;font-size:clamp(11px,2.8vw,14px);font-weight:650;overflow-wrap:anywhere;cursor:pointer;touch-action:manipulation}.tile:disabled{cursor:default}.tile:not(:disabled):active{transform:scale(.97)}.tile.bad{border-color:#c9694e;background:#cd694b2e}.tile.good{border:2px solid var(--green);background:#16a76524}.tile.bye{border:2px solid var(--green);background:#16a76535}
+.buttons{display:flex;gap:8px}.btn{flex:1;font:inherit;font-weight:700;font-size:14px;padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer}.btn.primary{background:var(--accent);color:#fff;border-color:transparent}.btn:disabled{opacity:.45;cursor:default}.hidden{display:none!important}.results{text-align:center;padding:18px 8px;display:grid;gap:12px}
+@media(min-width:550px){.cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.tile{min-height:76px}}@media(max-width:365px){.panel{padding:10px}.cards{gap:5px}.tile{min-height:60px}}@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#111820;--card:#1d2731;--panel:#283541;--text:#edf3fa;--muted:#b2c0cb;--border:#40505e;--accent:#377fd3;--green:#4cce99}}
+.text-small{font-size:13px}
+.play-layout{display:grid;gap:12px}
+.trophy{font-size:36px}
+.result-heading{font-size:23px;font-weight:800}
+.result-summary{font-size:14px;line-height:1.9}
+.footer-note{text-align:center;line-height:1.65}
