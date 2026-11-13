@@ -1,0 +1,19 @@
+# Local credentials and environment settings
+.env
+.env.*
+!.env.example
+.aws/
+.codex/
+*.pem
+*.key
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CAPITAL KARUTA｜首都かるた</title>
+<style>
+:root{color-scheme:light;--bg:#f4f6f9;--card:#fff;--panel:#eff3f8;--text:#202d3b;--muted:#697889;--border:#dce3ec;--accent:#1769c2;--green:#168558}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+main{max-width:720px;margin:20px auto;padding:0 12px 24px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;display:grid;gap:12px;box-shadow:0 3px 16px #1b33450b}
+.top,.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.muted{color:var(--muted);font-size:12px}.heading{font-size:22px;font-weight:800}
+.track{height:6px;border-radius:99px;background:var(--panel);overflow:hidden}.track>div{height:100%;width:0;background:var(--green);transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.stat{background:var(--panel);border-radius:10px;text-align:center;padding:9px 3px}.stat strong{font-size:23px;display:block;font-variant-numeric:tabular-nums}.stat span{font-size:11px;color:var(--muted)}
+.settings{border:1px solid var(--border);border-radius:11px;padding:11px;display:grid;gap:8px}input[type=range]{width:100%;accent-color:var(--accent)}
+.reader{background:var(--panel);border-radius:12px;padding:14px 10px;text-align:center;display:grid;gap:9px;min-height:140px;align-content:center}.sentence{font-size:clamp(17px,4vw,22px);font-weight:750;line-height:1.5;min-height:42px;overflow-wrap:anywhere}.clockline{height:4px;background:var(--border);border-radius:8px;overflow:hidden}.clockline>div{height:100%;width:0;background:var(--green)}.status{color:var(--muted);font-size:12px;min-height:20px;line-height:1.5}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.tile{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 3px;min-height:68px;line-height:1.3;font-size:clamp(11px,2.8vw,14px);font-weight:650;overflow-wrap:anywhere;cursor:pointer;touch-action:manipulation}.tile:disabled{cursor:default}.tile:not(:disabled):active{transform:scale(.97)}.tile.bad{border-color:#c9694e;background:#cd694b2e}.tile.good{border:2px solid var(--green);background:#16a76524}.tile.bye{border:2px solid var(--green);background:#16a76535}
+.buttons{display:flex;gap:8px}.btn{flex:1;font:inherit;font-weight:700;font-size:14px;padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);cursor:pointer}.btn.primary{background:var(--accent);color:#fff;border-color:transparent}.btn:disabled{opacity:.45;cursor:default}.hidden{display:none!important}.results{text-align:center;padding:18px 8px;display:grid;gap:12px}
+@media(min-width:550px){.cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.tile{min-height:76px}}@media(max-width:365px){.panel{padding:10px}.cards{gap:5px}.tile{min-height:60px}}@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#111820;--card:#1d2731;--panel:#283541;--text:#edf3fa;--muted:#b2c0cb;--border:#40505e;--accent:#377fd3;--green:#4cce99}}
+</style>
+</head>
+<body>
+<main>
+<div class="panel">
+  <div class="top"><div><div class="muted">WORLD CAPITALS · REVIEW</div><div class="heading">首都かるた</div></div><div class="muted" id="turn">第1問</div></div>
+  <div class="spread"><span class="muted">卒業した首都</span><strong id="mastered" style="font-size:13px">0 / 20</strong></div>
+  <div class="track"><div id="progress"></div></div>
+  <div class="stats"><div class="stat"><strong id="early">0</strong><span>先取り成功</span></div><div class="stat"><strong id="late">0</strong><span>先取り失敗</span></div><div class="stat"><strong id="wrong">0</strong><span>お手つき</span></div></div>
+  <div class="settings"><div class="spread"><strong style="font-size:13px">文字の表示速度</strong><strong id="speed-text" style="font-size:13px">0.20秒 / 文字</strong></div><input id="speed" type="range" min="50" max="600" step="25" value="200" aria-label="文字の表示速度"><div class="spread muted"><span>速い 0.05秒</span><span>遅い 0.60秒</span></div><div class="muted">どの国でも問題開始から5秒後に首都名が表示されます。</div></div>
+  <div id="play" style="display:grid;gap:12px"><div class="reader"><div class="spread"><span class="muted">読み札</span><span class="muted" id="clock">開始前</span></div><div class="sentence" id="sentence">準備ができたらスタート！</div><div class="clockline"><div id="timefill"></div></div><div class="status" id="status" aria-live="polite">2回連続で先取りすると卒業</div></div><div class="cards" id="cards"></div><div class="buttons"><button class="btn primary" id="start">スタート</button><button class="btn" id="reset">最初から</button></div></div>
+  <div id="finish" class="results hidden"><div style="font-size:36px">🏆</div><div style="font-size:23px;font-weight:800">全20か国を卒業！</div><div id="summary" style="font-size:14px;line-height:1.9"></div><button class="btn primary" id="again">もう一度遊ぶ</button></div>
+  <div class="muted" style="text-align:center;line-height:1.65">常に12枚の札を表示。未習得の問題が減ったら卒業済みの札をダミーとして補充します。</div>
+</div>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const raw=[
+ ['オーストラリア','キャンベラ'],['カナダ','オタワ'],
+ ['ブラジル','ブラジリア'],['トルコ','アンカラ'],
+ ['モロッコ','ラバト'],['エジプト','カイロ'],
+ ['ケニア','ナイロビ'],['タイ','バンコク'],
+ ['ベトナム','ハノイ'],['韓国','ソウル'],
+ ['アルゼンチン','ブエノスアイレス'],
+ ['ニュージーランド','ウェリントン'],
+ ['フランス','パリ'],['イタリア','ローマ'],
+ ['ドイツ','ベルリン'],['スペイン','マドリード'],
+ ['インド','ニューデリー'],['フィリピン','マニラ'],
+ ['ノルウェー','オスロ'],['メキシコ','メキシコシティ']
+];
+const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let all=[],waiting=[],slots=[],current=null,mode='idle';
+let speed=200,turn=0,mastered=0,early=0,late=0,wrong=0,wrongThis=0;
+let previousId=-1,startedAt=0,readTimer=null,advanceTimer=null,feedbackTimers=[];
+function clearTimers(){if(readTimer!==null)clearInterval(readTimer);if(advanceTimer!==null)clearTimeout(advanceTimer);feedbackTimers.forEach(clearTimeout);feedbackTimers=[];readTimer=null;advanceTimer=null}
+function newItem(pair,id){return{id,country:pair[0],capital:pair[1],streak:0,attempts:0,due:0,mastered:false}}
+function stats(){$('turn').textContent='第'+(turn+1)+'問';$('mastered').textContent=mastered+' / '+all.length;$('progress').style.width=(100*mastered/all.length)+'%';$('early').textContent=early;$('late').textContent=late;$('wrong').textContent=wrong}
+function makeTile(entry){const b=document.createElement('button');b.type='button';b.className='tile';b.textContent=entry.item.capital;b.disabled=mode!=='reading';b.addEventListener('click',()=>pick(entry,b));entry.button=b;return b}
+function init(){clearTimers();all=raw.map(newItem);const shuffled=shuffle(all);slots=shuffled.slice(0,12).map(item=>({item,dummy:false,button:null}));waiting=shuffled.slice(12);mode='idle';current=null;turn=mastered=early=late=wrong=0;previousId=-1;$('play').classList.remove('hidden');$('finish').classList.add('hidden');$('sentence').textContent='準備ができたらスタート！';$('status').textContent='2回連続で先取りすると卒業';$('clock').textContent='開始前';$('timefill').style.width='0%';$('start').textContent='スタート';$('start').disabled=false;$('cards').replaceChildren();slots.forEach(entry=>$('cards').appendChild(makeTile(entry)));stats()}
+function chooseQuestion(){const candidates=slots.filter(s=>!s.dummy).map(s=>s.item);if(!candidates.length)return null;let eligible=candidates.filter(x=>x.due<=turn);if(!eligible.length){const soonest=Math.min(...candidates.map(x=>x.due));eligible=candidates.filter(x=>x.due===soonest)}const others=eligible.filter(x=>x.id!==previousId);if(others.length)eligible=others;const seen=eligible.filter(x=>x.attempts>0),fresh=eligible.filter(x=>x.attempts===0);if(seen.length&&fresh.length)eligible=Math.random()<.7?seen:fresh;return shuffle(eligible)[0]}
+function sentence(x){return x.country+'の首都は'+x.capital+'。'}
+function renderReading(){if(mode!=='reading')return;const elapsed=performance.now()-startedAt;const prefix=Array.from(current.country+'の首都は');const suffix=Array.from(current.capital+'。');const prefixInterval=Math.min(speed,4700/prefix.length);let out='';if(elapsed<5000){const n=Math.min(prefix.length,Math.floor(elapsed/prefixInterval)+1);out=prefix.slice(0,n).join('');if(n===prefix.length)out+='……';$('clock').textContent=((5000-elapsed)/1000).toFixed(1)+'秒';$('timefill').style.width=(100*elapsed/5000)+'%'}else{const n=Math.min(suffix.length,Math.floor((elapsed-5000)/speed)+1);out=prefix.join('')+suffix.slice(0,n).join('');$('timefill').style.width='100%';$('clock').textContent=n===suffix.length?'読了':'答え表示中';if(n===suffix.length){clearInterval(readTimer);readTimer=null;$('status').textContent='首都名が表示されました。札を探そう！'}}$('sentence').textContent=out}
+function begin(){clearTimers();if(mastered===all.length){finish();return}current=chooseQuestion();if(!current){finish();return}mode='reading';wrongThis=0;$('sentence').textContent='▍';$('clock').textContent='5.0秒';$('timefill').style.width='0%';$('status').textContent=current.attempts>0?'復習問題。先取りできるかな？':'わかったら札をタップ！';$('start').disabled=true;$('start').textContent='進行中';slots.forEach(s=>{s.button.disabled=false;s.button.classList.remove('bad','good','bye')});stats();startedAt=performance.now();renderReading();readTimer=setInterval(renderReading,40)}
+function replaceGraduated(item){const pos=slots.findIndex(s=>s.item===item&&!s.dummy);if(pos<0)return;const old=slots[pos];let replacement;if(waiting.length){replacement={item:waiting.shift(),dummy:false,button:null}}else{const visibleIds=new Set(slots.filter((s,i)=>i!==pos).map(s=>s.item.id));const options=all.filter(x=>x.mastered&&!visibleIds.has(x.id));const dummy=shuffle(options)[0]||item;replacement={item:dummy,dummy:true,button:null}}slots[pos]=replacement;old.button.replaceWith(makeTile(replacement))}
+function pick(entry,b){if(mode!=='reading'||b.disabled)return;if(entry.item!==current||entry.dummy){wrong++;wrongThis++;stats();b.classList.add('bad');const task=setTimeout(()=>b.classList.remove('bad'),350);feedbackTimers.push(task);$('status').textContent='お手つき！ 別の札を探そう';return}const success=performance.now()-startedAt<5000&&wrongThis===0;clearTimers();mode='answered';current.attempts++;if(success){early++;current.streak++}else{late++;current.streak=0}slots.forEach(s=>s.button.disabled=true);b.classList.add('good');$('sentence').textContent=sentence(current);$('clock').textContent=success?'先取り成功':'正解';$('timefill').style.width='100%';const graduation=current.streak>=2;if(graduation){current.mastered=true;mastered++;b.classList.add('bye');$('status').textContent='🎉 2回連続先取り！ この首都は卒業！'}else if(success){$('status').textContent='★ 先取り成功！ あと1回で卒業'}else{$('status').textContent='答えを確認。数問後に復習しよう'}const finishedItem=current;previousId=finishedItem.id;turn++;if(!graduation)finishedItem.due=turn+2+Math.floor(Math.random()*3);stats();advanceTimer=setTimeout(()=>{if(graduation)replaceGraduated(finishedItem);if(mastered===all.length)finish();else begin()},950)}
+function finish(){clearTimers();mode='finished';$('play').classList.add('hidden');$('finish').classList.remove('hidden');$('progress').style.width='100%';$('mastered').textContent=all.length+' / '+all.length;$('summary').innerHTML='出題数：<strong>'+turn+'問</strong><br>先取り成功：<strong>'+early+'回</strong><br>先取り失敗：<strong>'+late+'回</strong><br>お手つき：<strong>'+wrong+'回</strong>'}
+$('start').addEventListener('click',()=>{if(mode==='idle')begin()});$('reset').addEventListener('click',init);$('again').addEventListener('click',init);$('speed').addEventListener('input',e=>{speed=Number(e.target.value);$('speed-text').textContent=(speed/1000).toFixed(2)+'秒 / 文字'});init();
+})();
+</script>
+</body>
+</html>
