@@ -2,9 +2,10 @@
 
 ## 現在の構成
 
-- `capital-karuta.html` がゲーム本体。CSS・JavaScriptを含む単一HTMLで、依存ライブラリーやビルド処理はない。
+- `capital-karuta.html` は画面構造とCSSを持ち、body末尾で同じフォルダーの `capital-karuta.js` を読み込む。
+- `capital-karuta.js` がゲーム処理を担当する。依存ライブラリーやビルド処理はない。通常のscriptとして読み込み、ローカルファイルでも起動できる構成を維持する。
 - `index.html` はゲーム本体へのリンクを持つ公開入口。
-- 世界20か国を対象にした1人用ゲーム。データは本体の `raw` 配列を参照する。
+- 世界20か国を対象にした1人用ゲーム。データは `capital-karuta.js` の `raw` 配列を参照する。
 
 ## 維持する仕様
 

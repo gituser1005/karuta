@@ -1,6 +1,6 @@
 # 首都かるた
 
-世界20か国の首都を覚える、ブラウザーで遊べる1人用かるたゲームです。HTML・CSS・JavaScriptが `capital-karuta.html` にまとまっており、インストールやビルドは不要です。
+世界20か国の首都を覚える、ブラウザーで遊べる1人用かるたゲームです。画面とスタイルは `capital-karuta.html`、ゲームの処理は `capital-karuta.js` に分かれています。インストールやビルドは不要です。
 
 ## ルール
 
@@ -15,7 +15,7 @@
 
 ## 起動方法
 
-`index.html` または `capital-karuta.html` をブラウザーで開いてください。`index.html` はゲームへの案内ページです。外部ライブラリー、サーバー、音声読み上げは使用していません。
+`index.html` または `capital-karuta.html` をブラウザーで開いてください。`index.html` はゲームへの案内ページです。`capital-karuta.html` と `capital-karuta.js` は同じフォルダーに置いてください。外部ライブラリー、サーバー、音声読み上げは使用していません。
 
 ## GitHub Pages
 
@@ -23,7 +23,8 @@
 
 ## ファイル
 
-- `capital-karuta.html`：ゲーム本体
+- `capital-karuta.html`：画面構造とスタイル
+- `capital-karuta.js`：ゲームデータ、出題・判定・進行処理
 - `index.html`：公開サイトの入口
 - `AGENTS.md`：仕様と開発時の注意事項
 
