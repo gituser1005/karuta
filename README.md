@@ -24,7 +24,7 @@
 
 ## 起動方法
 
-`index.html` または `capital-karuta.html` をブラウザーで開いてください。`index.html` はゲームへの案内ページです。`capital-karuta.html`・`capital-karuta.css`・`capital-karuta.js` は同じフォルダーに置いてください。外部ライブラリーやサーバーは不要です。音ありを選ぶと、ブラウザーのWeb Speech APIで読み上げます。
+`index.html` または `capital-karuta.html` をブラウザーで開いてください。`index.html` はゲームへの案内ページです。`capital-karuta.html`・`capital-karuta.css`・`capital-karuta.js` と `data/capitals.js` のフォルダー構成を保ってください。外部ライブラリーやサーバーは不要です。音ありを選ぶと、ブラウザーのWeb Speech APIで読み上げます。
 
 ## GitHub Pages
 
@@ -34,7 +34,9 @@
 
 - `capital-karuta.html`：画面構造
 - `capital-karuta.css`：スタイル、レスポンシブ表示、ダークモード
-- `capital-karuta.js`：ゲームデータ、出題・判定・進行処理
+- `capital-karuta.js`：出題・判定・進行・音声処理と、問題IDに紐づくセッション学習状態
+- `data/capitals.js`：固定ID付きの首都20問（問題・答え・任意の読み上げ情報）
+- `tests/question-data.test.cjs`：データと既存動作の互換性テスト
 - `index.html`：公開サイトの入口
 - `AGENTS.md`：仕様と開発時の注意事項
 
@@ -55,3 +57,11 @@
 ### Safariで音が出ない場合
 
 消音モードを解除して音量を確認し、「音なし」→「音あり」で試してください。発話の開始イベントを3秒以内に確認できない場合は案内を表示します。再生していない音声への不要な停止は避け、発話の置き換え時だけ停止後80ミリ秒以上空けています。この対策でSafari実機の動作が保証されるわけではありません。
+
+## 問題データの編集と再利用
+
+問題は `data/capitals.js` のJSON互換オブジェクトにまとめています。HTMLはゲーム処理より先にこの外部ファイルを読み込みます。fetchを使わないため、HTMLの直接起動とGitHub Pagesの両方で利用できます。問題IDは並べ替えや表記修正で変更しないでください。
+
+学習状態は問題データとは別のMapに問題IDで紐づけます。保存機能や暗記カード機能は今回追加していません。形式・任意の読み上げ情報・将来の注意点は [問題データの設計](docs/question-data.md) を参照してください。
+
+検証：`node --test tests/question-data.test.cjs`（Node.jsとGitを使用、追加パッケージ不要）。
