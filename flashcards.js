@@ -57,11 +57,24 @@
     flipButton.setAttribute('aria-pressed', String(flipped));
     flipButton.setAttribute('aria-label', (flipped ? queue[index].answer + '。タップで問題に戻る' : queue[index].question + '。タップで答えを確認'));
   }
-  function startSession() {
+  function startSession(nextQueue = null) {
     clearTimeout(animationTimer); audio.stop();
     const records = store.records();
-    queue = window.KarutaStudy.dueQuestions(questions, id => records[id], Date.now(), 20);
+    queue = nextQueue || window.KarutaStudy.dueQuestions(questions, id => records[id], Date.now(), 20);
     index = 0; reviews = []; render();
+  }
+  function checkReviewTargets() {
+    const records = store.records();
+    const available = window.KarutaStudy.dueQuestions(questions, id => records[id], Date.now(), 20);
+    if (!available.length) {
+      // Refresh the due-date message without discarding results or undo history.
+      result(); controls();
+      $('flash-status').textContent = '現在の復習対象は0枚です。次の復習予定までお待ちください。';
+      return;
+    }
+    startSession(available);
+    $('flash-status').textContent = available.length + '枚の復習を開始します。';
+    flipButton.focus({ preventScroll: true });
   }
   function rate(rating) {
     if (busy || !revealed || !queue[index]) return;
@@ -123,7 +136,7 @@
   flipButton.addEventListener('lostpointercapture', event => { if (drag) finishDrag(event, true); });
   ratingButtons.forEach(button => button.addEventListener('click', () => rate(button.dataset.rating)));
   $('undo').addEventListener('click', undo);
-  $('review-again').addEventListener('click', startSession);
+  $('review-again').addEventListener('click', checkReviewTargets);
   $('read-answer').addEventListener('click', () => { if (flipped && !busy && queue[index]) audio.speak(queue[index]); });
   window.addEventListener('pagehide', () => { audio.stop(); });
   document.addEventListener('visibilitychange', () => {

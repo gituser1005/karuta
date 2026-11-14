@@ -132,10 +132,23 @@ const base = process.env.KARUTA_TEST_URL || 'http://127.0.0.1:8082/karuta/';
     assert.equal(await evaluate(`document.getElementById('review-result').classList.contains('hidden')`), false);
     assert.equal(await evaluate(`document.getElementById('result-count').textContent`), '復習した枚数：19枚');
     await shot('mobile-result');
+    await click('#review-again');
+    assert.match(await evaluate(`document.getElementById('flash-status').textContent`),/復習対象は0枚/);
+    assert.equal(await evaluate(`document.getElementById('result-count').textContent`),'復習した枚数：19枚');
+    assert.equal(await evaluate(`document.getElementById('undo').disabled`),false);
+
     await click('#undo'); assert.equal(await count(), 19);
     await click('[data-rating="remembered"]'); await sleep(220);
     await navigate('flashcards.html');
     assert.equal(await evaluate(`document.getElementById('result-title').textContent`), '今日の復習は完了しています');
+    await click('#review-again');
+    assert.match(await evaluate(`document.getElementById('flash-status').textContent`),/復習対象は0枚/);
+    await evaluate(`(()=>{const s=JSON.parse(localStorage.getItem('karuta.learning.v1'));s.decks[KarutaDeck.id]['capital-au'].flashcard.nextReviewAt=Date.now()-1;localStorage.setItem('karuta.learning.v1',JSON.stringify(s));})()`);
+    await click('#review-again');
+    assert.equal(await evaluate(`document.getElementById('flash-progress').textContent`),'1 / 1枚');
+    assert.match(await evaluate(`document.getElementById('flash-status').textContent`),/1枚の復習を開始/);
+    await click('#flip-card'); await click('[data-rating="remembered"]'); await sleep(220);
+
     await navigate('capital-karuta.html');
     assert.equal(await evaluate(`document.getElementById('start').disabled`), true);
     assert.equal(await evaluate(`document.querySelectorAll('.tile').length`), 12);
