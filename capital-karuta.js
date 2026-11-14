@@ -20,33 +20,77 @@ let turn=0,mastered=0,early=0,late=0,wrong=0,wrongThis=0;
 let previousId=-1,startedAt=0,readTimer=null,advanceTimer=null,feedbackTimers=[];
 const speechSupported='speechSynthesis' in window&&'SpeechSynthesisUtterance' in window;
 let soundEnabled=false,activeSpeech=null,capitalAnnounced=false;
-function stopSpeech(){
-  activeSpeech=null;
-  if(speechSupported)window.speechSynthesis.cancel();
+let speechQueueTimer=null,speechStartTimer=null,lastSpeechCancelAt=-Infinity;
+const soundHelp='音あり：国名、5秒後の首都名、選んだ札を読み上げます。';
+function clearSpeechStartTimer(){
+  if(speechStartTimer!==null)clearTimeout(speechStartTimer);
+  speechStartTimer=null;
 }
-function audioFailed(){
+function stopSpeech(){
+  if(speechQueueTimer!==null)clearTimeout(speechQueueTimer);
+  speechQueueTimer=null;
+  clearSpeechStartTimer();
+  const needsCancel=speechSupported&&(activeSpeech!==null||window.speechSynthesis.speaking||window.speechSynthesis.pending);
+  activeSpeech=null;
+  // Safari can discard the next utterance after cancel(); never cancel an idle engine.
+  if(needsCancel){
+    window.speechSynthesis.cancel();
+    lastSpeechCancelAt=performance.now();
+  }
+}
+function audioFailed(code){
   soundEnabled=false;
   stopSpeech();
   $('sound-off').checked=true;
   $('sound-on').checked=false;
-  $('sound-status').textContent='読み上げを開始できませんでした。音なしで続けます。再度「音あり」を選ぶと試せます。';
+  $('sound-status').textContent=code==='not-allowed'
+    ? '読み上げが許可されませんでした。「音あり」をもう一度タップしてください。'
+    : '読み上げできませんでした。音なしで続けます。日本語音声の設定を確認して再度「音あり」を選んでください。'+(code?'（'+code+'）':'');
 }
 function speak(text){
   if(!soundEnabled||!speechSupported||document.hidden)return;
   stopSpeech();
   try{
+    const synth=window.speechSynthesis;
     const utterance=new window.SpeechSynthesisUtterance(text);
     utterance.lang='ja-JP';
     utterance.rate=1;
-    const voice=window.speechSynthesis.getVoices().find(x=>/^ja(?:[-_]|$)/i.test(x.lang));
+    const voices=synth.getVoices();
+    const japanese=voices.filter(x=>/^ja(?:[-_]|$)/i.test(x.lang));
+    const voice=japanese.find(x=>x.default)||japanese[0]||voices.find(x=>x.default);
     if(voice)utterance.voice=voice;
     activeSpeech=utterance;
-    utterance.onend=()=>{if(activeSpeech===utterance)activeSpeech=null};
-    utterance.onerror=()=>{if(activeSpeech===utterance)audioFailed()};
-    window.speechSynthesis.speak(utterance);
-  }catch(error){audioFailed()}
+    utterance.onstart=()=>{
+      if(activeSpeech!==utterance)return;
+      clearSpeechStartTimer();
+      $('sound-status').textContent=soundHelp;
+    };
+    utterance.onend=()=>{
+      if(activeSpeech!==utterance)return;
+      clearSpeechStartTimer();
+      activeSpeech=null;
+    };
+    utterance.onerror=event=>{if(activeSpeech===utterance)audioFailed(event.error)};
+    const launch=()=>{
+      speechQueueTimer=null;
+      if(activeSpeech!==utterance||!soundEnabled||document.hidden)return;
+      try{
+        speechStartTimer=setTimeout(()=>{
+          speechStartTimer=null;
+          if(activeSpeech===utterance)$('sound-status').textContent='読み上げの開始を確認できません。消音モード・音量を確認し、「音なし」→「音あり」で試してください。';
+        },3000);
+        if(synth.paused)synth.resume();
+        synth.speak(utterance);
+      }catch(error){audioFailed(error.name)}
+    };
+    // First speech stays inside the tap handler. Only replacement speech is delayed.
+    const wait=Math.max(0,80-(performance.now()-lastSpeechCancelAt));
+    if(wait>0)speechQueueTimer=setTimeout(launch,wait);
+    else launch();
+  }catch(error){audioFailed(error.name)}
 }
 function configureSound(){
+  if(speechSupported)window.speechSynthesis.getVoices();
   if(!speechSupported){
     $('sound-on').disabled=true;
     $('sound-status').textContent='このブラウザーは読み上げに対応していないため、音なしで遊べます。';
@@ -54,7 +98,7 @@ function configureSound(){
   $('sound-on').addEventListener('change',()=>{
     if(!$('sound-on').checked||!speechSupported)return;
     soundEnabled=true;
-    $('sound-status').textContent='音あり：国名、5秒後の首都名、選んだ札を読み上げます。';
+    $('sound-status').textContent=soundHelp;
     if(mode==='reading'){
       const revealed=performance.now()-startedAt>=5000;
       capitalAnnounced=revealed;
