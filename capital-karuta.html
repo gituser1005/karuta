@@ -13,6 +13,14 @@
   <div class="spread"><span class="muted">卒業した首都</span><strong id="mastered" class="text-small">0 / 20</strong></div>
   <div class="track"><div id="progress"></div></div>
   <div class="stats"><div class="stat"><strong id="early">0</strong><span>先取り成功</span></div><div class="stat"><strong id="late">0</strong><span>先取り失敗</span></div><div class="stat"><strong id="wrong">0</strong><span>お手つき</span></div></div>
+  <fieldset class="sound-settings">
+    <legend>読み上げ</legend>
+    <div class="sound-options">
+      <label><input type="radio" name="sound" id="sound-off" value="off" checked>音なし</label>
+      <label><input type="radio" name="sound" id="sound-on" value="on">音あり</label>
+    </div>
+    <p class="muted" id="sound-status" role="status" aria-live="polite">音なしで遊びます。</p>
+  </fieldset>
   <div id="play" class="play-layout"><div class="reader"><div class="spread"><span class="muted">読み札</span><span class="muted" id="clock">開始前</span></div><div class="sentence" id="sentence">準備ができたらスタート！</div><div class="clockline"><div id="timefill"></div></div><div class="status" id="status" aria-live="polite">2回連続で先取りすると卒業</div></div><div class="cards" id="cards"></div><div class="buttons"><button class="btn primary" id="start">スタート</button><button class="btn" id="reset">最初から</button></div></div>
   <div id="finish" class="results hidden"><div class="trophy">🏆</div><div class="result-heading">全20か国を卒業！</div><div id="summary" class="result-summary"></div><button class="btn primary" id="again">もう一度遊ぶ</button></div>
   <div class="muted footer-note">常に12枚の札を表示。未習得の問題が減ったら卒業済みの札をダミーとして補充します。</div>
