@@ -90,6 +90,17 @@ const base = process.env.KARUTA_TEST_URL || 'http://127.0.0.1:8082/karuta/';
     ` });
     await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await call('Emulation.setTouchEmulationEnabled', { enabled: true });
+    for(const [width,dark] of [[320,false],[390,true],[768,false]]){
+      await call('Emulation.setDeviceMetricsOverride',{width,height:844,deviceScaleFactor:1,mobile:width<550});
+      await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:dark?'dark':'light'}]});
+      await navigate('capital-karuta.html');
+      const layout=await evaluate(`(()=>{const tiles=[...document.querySelectorAll('.tile')];return{count:tiles.length,columns:getComputedStyle(document.getElementById('cards')).gridTemplateColumns.split(/\\s+/).length,rows:new Set(tiles.map(e=>e.getBoundingClientRect().top)).size,overflow:document.documentElement.scrollWidth>innerWidth}})()`);
+      assert.equal(layout.count,9);assert.equal(layout.columns,3);assert.equal(layout.rows,3);assert.equal(layout.overflow,false);
+      await shot('karuta-nine-'+width);
+    }
+    console.log('PASS: nine karuta tiles in three columns/three rows at 320, 390 dark and 768px.');
+    await call('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await call('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:'light'}]});
     await navigate('flashcards.html');
     await evaluate(`localStorage.removeItem('karuta.learning.v1')`);
     await navigate('flashcards.html');
@@ -151,7 +162,7 @@ const base = process.env.KARUTA_TEST_URL || 'http://127.0.0.1:8082/karuta/';
 
     await navigate('capital-karuta.html');
     assert.equal(await evaluate(`document.getElementById('start').disabled`), true);
-    assert.equal(await evaluate(`document.querySelectorAll('.tile').length`), 12);
+    assert.equal(await evaluate(`document.querySelectorAll('.tile').length`), 9);
     await click('#practice-all');
     assert.equal(await evaluate(`document.getElementById('start').disabled`), false);
     console.log('PASS: reload persistence, future exclusion, completion counts, final undo, zero candidates and all-practice escape.');

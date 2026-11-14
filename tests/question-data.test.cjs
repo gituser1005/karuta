@@ -7,9 +7,11 @@ const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
-// Last published implementation: compare behavior, not a rewritten approximation.
+// Published rules/audio as reference, with only the intentional 12-to-9 tile count change.
 const baseline = execFileSync('git', ['-c', `safe.directory=${root.replace(/\\/g, '/')}`,
   'show', '326969f:capital-karuta.js'], { cwd: root, encoding: 'utf8' }).replace(/\r\n/g, '\n');
+// Change only the original slot allocation; leave rules, RNG and audio untouched.
+const nineCardBaseline = baseline.replace('shuffled.slice(0,12)', 'shuffled.slice(0,9)').replace('waiting=shuffled.slice(12)', 'waiting=shuffled.slice(9)');
 const current = read('capital-karuta.js');
 const dataContext = { window: {} };
 vm.runInNewContext(read('data/capitals.js'), dataContext);
@@ -147,7 +149,7 @@ test('20 questions exactly match the published country/capital pairs and have st
 
 for (const audio of [false, true]) {
   test(`published behavior is unchanged through a full game (audio=${audio})`, () => {
-    const old = game(baseline), updated = game(current, { sharedRecords: {} });
+    const old = game(nineCardBaseline), updated = game(current, { sharedRecords: {} });
     const equivalent = () => assert.deepEqual(updated.snapshot(), old.snapshot());
     // Map insertion order of mock nodes is irrelevant to rendered behavior.
     const normalize = g => { for (const id of ['start', 'reset', 'cards', 'mastered', 'clock', 'sentence', 'status']) g.get(id); };
@@ -156,12 +158,12 @@ for (const audio of [false, true]) {
     old.api.begin(); updated.api.begin(); equivalent();
     let questions = 0, sawDummy = false, sawReplacement = false;
     while (old.api.mode === 'reading' && questions < 1000) {
-      assert.equal(updated.api.slots.length, 12);
-      assert.equal(new Set(updated.api.slots.map(s => s.item.id)).size, 12);
+      assert.equal(updated.api.slots.length, 9);
+      assert.equal(new Set(updated.api.slots.map(s => s.item.id)).size, 9);
       assert.deepEqual(updated.get('cards').children, Array.from(updated.api.slots, s => s.button));
       assert.ok(updated.api.slots.some(s => s.item === updated.api.current && !s.dummy));
       sawDummy ||= updated.api.slots.some(s => s.dummy);
-      sawReplacement ||= updated.api.waiting.length < 8;
+      sawReplacement ||= updated.api.waiting.length < 11;
       if (questions % 7 === 1) { old.choose(true); updated.choose(true); equivalent(); }
       const delay = [0, 4999, 5000, 6500][questions % 4];
       old.tick(delay); updated.tick(delay); equivalent();
@@ -193,7 +195,7 @@ test('optional speech text is used without altering visible questions and answer
 
 test('missing/invalid/duplicate data fail safely instead of starting an incomplete game', () => {
   const mutations = [() => null, d => ({ ...d, schemaVersion: 999 }),
-    d => ({ ...d, questions: d.questions.slice(0, 11) }),
+    d => ({ ...d, questions: d.questions.slice(0, 9) }),
     d => { d.questions[1].id = d.questions[0].id; return d; },
     d => { d.questions[0].answer = ''; return d; },
     d => { d.questions[0].speech = { answer: '' }; return d; }];
@@ -217,12 +219,12 @@ test('no audio support still allows normal play; reset cancels pending audio', (
 });
 
 
-test('shared learning allows one active question with eleven dummies and keeps graduation separate',()=>{
+test('shared learning allows one active question with eight dummies and keeps graduation separate',()=>{
  const Study=require('../learning.js'),now=Date.now(),records={};
  for(const q of originalDeck.questions)records[q.id]={flashcard:{...Study.schedule(null,'remembered',now),history:[]}};
  records['capital-au'].flashcard={...Study.schedule(null,'forgot',now),history:[]};
  const g=game(current,{sharedRecords:records});
- assert.equal(g.api.slots.filter(s=>!s.dummy).length,1);assert.equal(g.api.slots.length,12);
+ assert.equal(g.api.slots.filter(s=>!s.dummy).length,1);assert.equal(g.api.slots.length,9);
  g.api.begin();g.choose();g.tick(950);g.choose();g.tick(950);
  assert.equal(g.api.mode,'finished');
  const saved=g.sharedStore.get('capital-au');assert.equal(saved.karuta.graduations,1);assert.equal(saved.flashcard.lastRating,'forgot');
@@ -232,7 +234,20 @@ test('zero practice candidates offers an explicit all-question practice override
  const Study=require('../learning.js'),records={};
  for(const q of originalDeck.questions)records[q.id]={flashcard:{...Study.schedule(null,'remembered',Date.now()),history:[]}};
  const g=game(current,{sharedRecords:records});assert.equal(g.api.mode,'complete');assert.equal(g.get('start').disabled,true);
- assert.equal(g.api.slots.length,12);assert.ok(g.api.slots.every(s=>s.dummy));
- g.get('practice-all').handlers.click();assert.equal(g.api.mode,'idle');assert.equal(g.api.slots.filter(s=>!s.dummy).length,12);assert.equal(g.api.waiting.length,8);
+ assert.equal(g.api.slots.length,9);assert.ok(g.api.slots.every(s=>s.dummy));
+ g.get('practice-all').handlers.click();assert.equal(g.api.mode,'idle');assert.equal(g.api.slots.filter(s=>!s.dummy).length,9);assert.equal(g.api.waiting.length,11);
  g.api.begin();assert.equal(g.api.mode,'reading');
+});
+
+test('ten-question decks start with nine tiles and complete all ten; nine questions fail safely',()=>{
+ for(const audio of [false,true]){
+  const deck=copy(originalDeck);deck.questions=deck.questions.slice(0,10);
+  const g=game(current,{deck,sharedRecords:{}});if(audio){g.sound(true);g.tick(1000)}g.api.begin();
+  let turns=0;while(g.api.mode==='reading'&&turns<100){
+   assert.equal(g.api.slots.length,9);assert.equal(new Set(g.api.slots.map(s=>s.item.id)).size,9);
+   g.choose();while(g.api.mode==='answered')g.tick(50);turns++;
+  }
+  assert.equal(g.api.mode,'finished');assert.equal(turns,20);assert.ok(g.api.all.every(i=>i.state.mastered));
+ }
+ const short=copy(originalDeck);short.questions=short.questions.slice(0,9);assert.equal(game(current,{deck:short}).api.mode,'error');
 });

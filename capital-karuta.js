@@ -1,5 +1,6 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
+const TILE_COUNT=9,MIN_QUESTIONS=10;
 let questions=[];
 // Session-only learning state is separate from the immutable question definitions.
 const learningState=new Map();
@@ -8,7 +9,7 @@ function readQuestions(deck){
   if(!deck||deck.schemaVersion!==1||typeof deck.id!=='string'||!deck.id.trim()||!Array.isArray(deck.questions)){
     throw new Error('問題データの形式が正しくありません。');
   }
-  if(deck.questions.length<12)throw new Error('12枚の札を表示するには12問以上必要です。');
+  if(deck.questions.length<MIN_QUESTIONS)throw new Error('かるたで遊ぶには10問以上必要です。');
   const ids=new Set();
   const nonempty=value=>typeof value==='string'&&value.trim().length>0;
   return Object.freeze(deck.questions.map(question=>{
@@ -150,15 +151,15 @@ function init(){
   const rank=item=>practiceAll||!sharedStore?0:window.KarutaStudy.practicePriority(records[item.id],practiceNow);
   const candidates=shuffled.filter(item=>rank(item)!==Infinity).sort((a,b)=>rank(a)-rank(b));
   practiceIds=new Set(candidates.map(item=>item.id));targetCount=candidates.length;
-  slots=candidates.slice(0,12).map(item=>({item,dummy:false,button:null}));
-  if(slots.length<12){
+  slots=candidates.slice(0,TILE_COUNT).map(item=>({item,dummy:false,button:null}));
+  if(slots.length<TILE_COUNT){
     const visible=new Set(slots.map(s=>s.item.id));
     for(const item of shuffled){
-      if(slots.length===12)break;
+      if(slots.length===TILE_COUNT)break;
       if(!visible.has(item.id)){slots.push({item,dummy:true,button:null});visible.add(item.id)}
     }
   }
-  waiting=candidates.slice(12);mode='idle';current=null;turn=mastered=early=late=wrong=0;previousId=-1;
+  waiting=candidates.slice(TILE_COUNT);mode='idle';current=null;turn=mastered=early=late=wrong=0;previousId=-1;
   $('play').classList.remove('hidden');$('finish').classList.add('hidden');
   $('sentence').textContent='準備ができたらスタート！';$('status').textContent='2回連続で先取りすると卒業';
   $('clock').textContent='開始前';$('timefill').style.width='0%';$('start').textContent='スタート';$('start').disabled=false;
