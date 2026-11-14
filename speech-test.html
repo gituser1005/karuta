@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>読み上げテスト｜首都かるた</title>
+  <link rel="stylesheet" href="capital-karuta.css">
+  <link rel="stylesheet" href="speech-test.css">
+</head>
+<body>
+<main>
+  <section class="panel speech-test" aria-labelledby="test-title">
+    <header>
+      <p class="muted">首都かるた · テスト版</p>
+      <h1 id="test-title">読み上げテスト</h1>
+      <p class="test-description">文章を聞いたあと、「キャンベラ」の札をタップして声を確認できます。</p>
+    </header>
+    <div class="reader">
+      <p id="test-sentence" class="sentence">オーストラリアの首都はキャンベラです</p>
+    </div>
+    <div class="buttons">
+      <button type="button" class="btn primary" id="read-sentence">文章を読み上げる</button>
+      <button type="button" class="btn" id="stop-speech" disabled>停止</button>
+    </div>
+    <section aria-labelledby="answer-heading">
+      <h2 id="answer-heading">選択肢</h2>
+      <button type="button" class="tile answer-tile" id="answer">キャンベラ</button>
+      <p class="muted">札を選ぶと「キャンベラ」と読み上げます。</p>
+    </section>
+    <p class="status" id="speech-status" role="status" aria-live="polite">「文章を読み上げる」または札をタップしてください。</p>
+    <p class="muted">音声・発音・読み始めるまでの時間は端末によって異なります。音が出ない場合は端末の音量を確認してください。</p>
+    <a href="capital-karuta.html">通常の首都かるたへ</a>
+  </section>
+</main>
+<script src="speech-test.js"></script>
+</body>
+</html>
