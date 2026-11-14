@@ -31,7 +31,7 @@ class Element {
   }
 }
 
-function game(source, { deck = copy(originalDeck), audioSupport = true, seed = 12345 } = {}) {
+function game(source, { deck = copy(originalDeck), audioSupport = true, seed = 12345, sharedRecords = null } = {}) {
   let now = 0, nextId = 0, speaking = null;
   const nodes = new Map(), timers = new Map(), audio = [], events = {}, documentEvents = {};
   const get = id => { if (!nodes.has(id)) nodes.set(id, new Element()); return nodes.get(id); };
@@ -76,6 +76,13 @@ function game(source, { deck = copy(originalDeck), audioSupport = true, seed = 1
     setTimeout: (fn, delay) => schedule(fn, delay), clearTimeout: id => timers.delete(id),
     setInterval: (fn, delay) => schedule(fn, delay, delay), clearInterval: id => timers.delete(id)
   };
+  let sharedStore;
+  if(sharedRecords!==null){
+    const Study=require('../learning.js');
+    const db={value:JSON.stringify({version:1,decks:{[deck.id]:sharedRecords}}),getItem(){return this.value},setItem(key,value){this.value=value}};
+    sharedStore=Study.createStore(deck.id,{storage:db});
+    window.KarutaStudy={...Study,createStore:()=>sharedStore};
+  }
   // Inspection only; production exposes no mutable game state.
   const inspect = `globalThis.inspect={begin,init,pick,renderReading,
     get all(){return all},get slots(){return slots},get current(){return current},
@@ -86,7 +93,7 @@ function game(source, { deck = copy(originalDeck), audioSupport = true, seed = 1
   const answer = item => item.data?.answer ?? item.capital;
   const state = item => item.state ?? item;
   return {
-    api, get, audio, document, documentEvents, events, deck,
+    api, get, audio, document, documentEvents, events, deck, sharedStore,
     tick(ms) {
       const until = now + ms;
       let count = 0;
@@ -115,7 +122,7 @@ function game(source, { deck = copy(originalDeck), audioSupport = true, seed = 1
         slots: api.slots.map(s => [answer(s.item), s.dummy, s.button.disabled]),
         waiting: api.waiting.map(answer),
         states: api.all.map(item => { const s = state(item); return [answer(item), s.streak, s.attempts, s.due, s.mastered]; }),
-        text: [...nodes].map(([id, el]) => [id, el.textContent, el.disabled, el.checked, el.style]),
+        text: [...nodes].filter(([id]) => !['finish-title','practice-all','learning-notice'].includes(id)).map(([id, el]) => [id, el.textContent, el.disabled, el.checked, el.style]),
         audio
       });
     }
@@ -140,7 +147,7 @@ test('20 questions exactly match the published country/capital pairs and have st
 
 for (const audio of [false, true]) {
   test(`published behavior is unchanged through a full game (audio=${audio})`, () => {
-    const old = game(baseline), updated = game(current);
+    const old = game(baseline), updated = game(current, { sharedRecords: {} });
     const equivalent = () => assert.deepEqual(updated.snapshot(), old.snapshot());
     // Map insertion order of mock nodes is irrelevant to rendered behavior.
     const normalize = g => { for (const id of ['start', 'reset', 'cards', 'mastered', 'clock', 'sentence', 'status']) g.get(id); };
@@ -207,4 +214,25 @@ test('no audio support still allows normal play; reset cancels pending audio', (
   audio.tick(10000);
   assert.equal(audio.audio.filter(a => a[0] === 'speak').length, count);
   assert.equal(audio.api.mode, 'idle');
+});
+
+
+test('shared learning allows one active question with eleven dummies and keeps graduation separate',()=>{
+ const Study=require('../learning.js'),now=Date.now(),records={};
+ for(const q of originalDeck.questions)records[q.id]={flashcard:{...Study.schedule(null,'remembered',now),history:[]}};
+ records['capital-au'].flashcard={...Study.schedule(null,'forgot',now),history:[]};
+ const g=game(current,{sharedRecords:records});
+ assert.equal(g.api.slots.filter(s=>!s.dummy).length,1);assert.equal(g.api.slots.length,12);
+ g.api.begin();g.choose();g.tick(950);g.choose();g.tick(950);
+ assert.equal(g.api.mode,'finished');
+ const saved=g.sharedStore.get('capital-au');assert.equal(saved.karuta.graduations,1);assert.equal(saved.flashcard.lastRating,'forgot');
+ assert.equal(saved.flashcard.nextReviewAt,records['capital-au'].flashcard.nextReviewAt);
+});
+test('zero practice candidates offers an explicit all-question practice override',()=>{
+ const Study=require('../learning.js'),records={};
+ for(const q of originalDeck.questions)records[q.id]={flashcard:{...Study.schedule(null,'remembered',Date.now()),history:[]}};
+ const g=game(current,{sharedRecords:records});assert.equal(g.api.mode,'complete');assert.equal(g.get('start').disabled,true);
+ assert.equal(g.api.slots.length,12);assert.ok(g.api.slots.every(s=>s.dummy));
+ g.get('practice-all').handlers.click();assert.equal(g.api.mode,'idle');assert.equal(g.api.slots.filter(s=>!s.dummy).length,12);assert.equal(g.api.waiting.length,8);
+ g.api.begin();assert.equal(g.api.mode,'reading');
 });

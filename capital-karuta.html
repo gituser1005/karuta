@@ -9,6 +9,8 @@
 <body>
 <main>
 <div class="panel">
+  <nav class="study-nav" aria-label="学習方法"><span aria-current="page">かるた</span><a href="flashcards.html">暗記カードへ</a></nav>
+  <p id="learning-notice" class="muted hidden" role="status"></p>
   <div class="top"><div><div class="muted">WORLD CAPITALS · REVIEW</div><div class="heading">首都かるた</div></div><div class="muted" id="turn">第1問</div></div>
   <div class="spread"><span class="muted">卒業した首都</span><strong id="mastered" class="text-small">0 / 20</strong></div>
   <div class="track"><div id="progress"></div></div>
@@ -21,12 +23,14 @@
     </div>
     <p class="muted" id="sound-status" role="status" aria-live="polite">音なしで遊びます。</p>
   </fieldset>
+  <button type="button" class="btn hidden" id="practice-all">全問で練習する</button>
   <div id="play" class="play-layout"><div class="reader"><div class="spread"><span class="muted">読み札</span><span class="muted" id="clock">開始前</span></div><div class="sentence" id="sentence">準備ができたらスタート！</div><div class="clockline"><div id="timefill"></div></div><div class="status" id="status" aria-live="polite">2回連続で先取りすると卒業</div></div><div class="cards" id="cards"></div><div class="buttons"><button class="btn primary" id="start">スタート</button><button class="btn" id="reset">最初から</button></div></div>
-  <div id="finish" class="results hidden"><div class="trophy">🏆</div><div class="result-heading">全20か国を卒業！</div><div id="summary" class="result-summary"></div><button class="btn primary" id="again">もう一度遊ぶ</button></div>
-  <div class="muted footer-note">常に12枚の札を表示。未習得の問題が減ったら卒業済みの札をダミーとして補充します。</div>
+  <div id="finish" class="results hidden"><div class="trophy">🏆</div><div class="result-heading" id="finish-title">全20か国を卒業！</div><div id="summary" class="result-summary"></div><button class="btn primary" id="again">もう一度遊ぶ</button></div>
+  <div class="muted footer-note">札は常に12枚。練習候補が少ないときは、卒業済み・復習予定前の札をダミーとして補充します。</div>
 </div>
 </main>
 <script src="data/capitals.js"></script>
+<script src="learning.js"></script>
 <script src="capital-karuta.js"></script>
 </body>
 </html>

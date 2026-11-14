@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>暗記カード</title>
+  <link rel="stylesheet" href="capital-karuta.css">
+  <link rel="stylesheet" href="flashcards.css">
+</head>
+<body>
+<main class="flash-main">
+  <section class="panel flash-panel" aria-labelledby="flash-title">
+    <header class="spread">
+      <div><p class="muted" id="deck-title">学習</p><h1 id="flash-title">暗記カード</h1></div>
+      <a class="mode-link" href="capital-karuta.html">かるたへ</a>
+    </header>
+    <div class="spread"><span id="flash-progress" aria-live="polite">0 / 0枚</span><button type="button" class="btn undo-button" id="undo" disabled>戻る</button></div>
+    <p id="storage-notice" class="notice hidden" role="status"></p>
+    <div id="review-area">
+      <div class="card-stage" id="card-stage">
+        <div class="flash-card" id="flash-card">
+          <button type="button" class="card-flip" id="flip-card" aria-label="答えを確認する" aria-pressed="false">
+            <span class="card-inner" id="card-inner">
+              <span class="card-face card-front" id="card-front"><span class="face-label">問題</span><span id="flash-question"></span><span class="tap-hint">タップで答えを見る</span></span>
+              <span class="card-face card-back" id="card-back" aria-hidden="true"><span class="face-label">答え</span><span id="flash-answer"></span><span class="tap-hint">タップで問題に戻る</span></span>
+            </span>
+          </button>
+          <span class="drag-label" id="drag-label" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="audio-row"><button type="button" class="btn" id="read-answer" hidden>答えを読み上げる</button></div>
+      <p class="swipe-help" id="swipe-help">タップして答えを確認してください</p>
+      <div class="rating-buttons" aria-label="自己評価">
+        <button type="button" class="btn rating-forgot" data-rating="forgot" disabled>← 忘れた</button>
+        <button type="button" class="btn rating-hesitant" data-rating="hesitant" disabled>↑ 迷った</button>
+        <button type="button" class="btn rating-remembered" data-rating="remembered" disabled>覚えていた →</button>
+      </div>
+    </div>
+    <div id="review-result" class="review-result hidden" aria-live="polite">
+      <h2 id="result-title">復習が終わりました</h2>
+      <p id="result-count"></p>
+      <dl id="result-ratings"><div><dt>覚えていた</dt><dd id="count-remembered">0枚</dd></div><div><dt>迷った</dt><dd id="count-hesitant">0枚</dd></div><div><dt>忘れた</dt><dd id="count-forgot">0枚</dd></div></dl>
+      <p class="muted" id="next-review"></p>
+      <button type="button" class="btn" id="review-again">復習対象を確認する</button>
+      <a class="mode-link" href="capital-karuta.html">かるたで練習する</a>
+    </div>
+    <p id="flash-status" class="flash-status muted" role="status" aria-live="polite"></p>
+  </section>
+</main>
+<script src="data/capitals.js"></script>
+<script src="learning.js"></script>
+<script src="flashcard-audio.js"></script>
+<script src="flashcards.js"></script>
+</body>
+</html>
