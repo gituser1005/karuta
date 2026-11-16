@@ -7,11 +7,13 @@ const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
-// Published rules/audio as reference, with only the intentional 12-to-9 tile count change.
+// Published rules/audio reference, adjusted only for nine tiles and silent wrong taps.
 const baseline = execFileSync('git', ['-c', `safe.directory=${root.replace(/\\/g, '/')}`,
   'show', '326969f:capital-karuta.js'], { cwd: root, encoding: 'utf8' }).replace(/\r\n/g, '\n');
-// Change only the original slot allocation; leave rules, RNG and audio untouched.
-const nineCardBaseline = baseline.replace('shuffled.slice(0,12)', 'shuffled.slice(0,9)').replace('waiting=shuffled.slice(12)', 'waiting=shuffled.slice(9)');
+// Apply the explicitly requested slot count and correct-tap-only speech changes.
+const expectedBaseline = baseline.replace('shuffled.slice(0,12)', 'shuffled.slice(0,9)').replace('waiting=shuffled.slice(12)', 'waiting=shuffled.slice(9)')
+  .replace('if(entry.item!==current||entry.dummy){speak(entry.item.capital);wrong++;', 'if(entry.item!==current||entry.dummy){wrong++;')
+  .replace('国名、5秒後の首都名、選んだ札を読み上げます。','国名、5秒後の首都名、正解した札を読み上げます。');
 const current = read('capital-karuta.js');
 const dataContext = { window: {} };
 vm.runInNewContext(read('data/capitals.js'), dataContext);
@@ -149,7 +151,7 @@ test('20 questions exactly match the published country/capital pairs and have st
 
 for (const audio of [false, true]) {
   test(`published behavior is unchanged through a full game (audio=${audio})`, () => {
-    const old = game(nineCardBaseline), updated = game(current, { sharedRecords: {} });
+    const old = game(expectedBaseline), updated = game(current, { sharedRecords: {} });
     const equivalent = () => assert.deepEqual(updated.snapshot(), old.snapshot());
     // Map insertion order of mock nodes is irrelevant to rendered behavior.
     const normalize = g => { for (const id of ['start', 'reset', 'cards', 'mastered', 'clock', 'sentence', 'status']) g.get(id); };
@@ -250,4 +252,17 @@ test('ten-question decks start with nine tiles and complete all ten; nine questi
   assert.equal(g.api.mode,'finished');assert.equal(turns,20);assert.ok(g.api.all.every(i=>i.state.mastered));
  }
  const short=copy(originalDeck);short.questions=short.questions.slice(0,9);assert.equal(game(current,{deck:short}).api.mode,'error');
+});
+
+test('wrong taps do not speak or interrupt the question; correct taps still speak after an error',()=>{
+ for(const dummy of [false,true]){
+  let records=null;
+  if(dummy){const Study=require('../learning.js');records={};for(const q of originalDeck.questions)records[q.id]={flashcard:{...Study.schedule(null,'remembered',Date.now()),history:[]}};delete records['capital-au'];}
+  const g=game(current,{sharedRecords:records});g.sound(true);g.tick(1000);g.api.begin();
+  const before=copy(g.audio);g.choose(true);assert.deepEqual(g.audio,before);g.tick(80);assert.deepEqual(g.audio,before);
+  assert.equal(g.get('wrong').textContent,1);assert.equal(g.api.mode,'reading');
+  const answer=g.api.current.data.answer;g.choose();g.tick(80);
+  assert.equal(g.audio.filter(e=>e[0]==='speak').at(-1)[2],answer);
+  assert.equal(g.get('late').textContent,1);assert.equal(g.api.current.state.streak,0);
+ }
 });
